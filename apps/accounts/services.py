@@ -175,8 +175,12 @@ class DashboardService:
 
                 for schedule in schedules:
                     # Generar slots disponibles
-                    current_time = datetime.combine(check_date, schedule.start_time)
-                    end_time = datetime.combine(check_date, schedule.end_time)
+                    current_time = timezone.make_aware(
+                        datetime.combine(check_date, schedule.start_time)
+                    )
+                    end_time = timezone.make_aware(
+                        datetime.combine(check_date, schedule.end_time)
+                    )
 
                     # Si es hoy, empezar desde ahora + 30 min
                     if check_date == self.today:

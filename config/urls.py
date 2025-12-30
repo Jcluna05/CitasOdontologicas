@@ -24,12 +24,14 @@ urlpatterns = [
     path('patients/', include('apps.patients.urls')),
     path('appointments/', include('apps.appointments.urls')),
     path('notifications/', include('apps.notifications.urls')),
+    path('inventory/', include('apps.inventory.urls')),
 
     # API routes
     path('api/', include('apps.accounts.api_urls')),
     path('api/', include('apps.clinic.api_urls')),
     path('api/', include('apps.patients.api_urls')),
     path('api/', include('apps.appointments.api_urls')),
+    path('api/', include('apps.inventory.api_urls')),
 
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -390,6 +390,30 @@
                 </a>
             </div>
 
+            <div class="nav-section">
+                <div class="nav-section-title">Inventario</div>
+                <a class="nav-link {% if 'inventory' in request.path and 'products' not in request.path and 'categories' not in request.path and 'suppliers' not in request.path %}active{% endif %}"
+                   href="{% url 'inventory:dashboard' %}">
+                    <i class="bi bi-box-seam-fill"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-link {% if 'products' in request.path %}active{% endif %}"
+                   href="{% url 'inventory:product_list' %}">
+                    <i class="bi bi-capsule"></i>
+                    <span>Productos</span>
+                </a>
+                <a class="nav-link {% if 'categories' in request.path %}active{% endif %}"
+                   href="{% url 'inventory:category_list' %}">
+                    <i class="bi bi-folder-fill"></i>
+                    <span>Categorías</span>
+                </a>
+                <a class="nav-link {% if 'suppliers' in request.path %}active{% endif %}"
+                   href="{% url 'inventory:supplier_list' %}">
+                    <i class="bi bi-truck"></i>
+                    <span>Proveedores</span>
+                </a>
+            </div>
+
             {% if user.is_admin %}
             <div class="nav-section">
                 <div class="nav-section-title">Administración</div>

@@ -1,0 +1,90 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Salida de Stock - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">Inventario</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'inventory:product_detail' product.pk %}">{{ product.name }}</a></li>
+                        <li class="breadcrumb-item active">Salida</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-dash-circle text-danger me-2"></i>
+                    Salida de Stock
+                </h1>
+            </div>
+
+            <!-- Producto Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-box-seam text-primary fs-4"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">{{ product.name }}</h5>
+                            <div class="text-muted small">{{ product.code }}{% if product.brand %} · {{ product.brand }}{% endif %}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="h4 mb-0 {% if product.stock_status == 'danger' %}text-danger{% elif product.stock_status == 'warning' %}text-warning{% else %}text-success{% endif %}">
+                                {{ product.current_stock }}
+                            </div>
+                            <small class="text-muted">{{ product.get_unit_display }} disponible</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger bg-opacity-10 border-0">
+                    <h5 class="mb-0 text-danger">
+                        <i class="bi bi-arrow-up-circle me-2"></i>
+                        Registrar Salida
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.quantity.id_for_label }}" class="form-label">Cantidad a retirar *</label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                                <div class="invalid-feedback d-block">{{ form.quantity.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Máximo disponible: {{ product.current_stock }} {{ product.get_unit_display }}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">Motivo *</label>
+                            {{ form.reason }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notas</label>
+                            {{ form.notes }}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-check-lg me-1"></i>Registrar Salida
+                            </button>
+                            <a href="{% url 'inventory:product_detail' product.pk %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

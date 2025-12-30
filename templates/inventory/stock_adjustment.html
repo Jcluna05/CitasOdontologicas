@@ -1,0 +1,93 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Ajuste de Inventario - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">Inventario</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'inventory:product_detail' product.pk %}">{{ product.name }}</a></li>
+                        <li class="breadcrumb-item active">Ajuste</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-sliders text-info me-2"></i>
+                    Ajuste de Inventario
+                </h1>
+            </div>
+
+            <!-- Producto Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="bi bi-box-seam text-primary fs-4"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1">{{ product.name }}</h5>
+                            <div class="text-muted small">{{ product.code }}{% if product.brand %} · {{ product.brand }}{% endif %}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="h4 mb-0 {% if product.stock_status == 'danger' %}text-danger{% elif product.stock_status == 'warning' %}text-warning{% else %}text-success{% endif %}">
+                                {{ product.current_stock }}
+                            </div>
+                            <small class="text-muted">{{ product.get_unit_display }} actual</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info bg-opacity-10 border-0">
+                    <h5 class="mb-0 text-info">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Corregir Cantidad
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Un ajuste se usa para corregir diferencias entre el stock del sistema y el inventario físico real.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.new_quantity.id_for_label }}" class="form-label">Nueva cantidad *</label>
+                            {{ form.new_quantity }}
+                            {% if form.new_quantity.errors %}
+                                <div class="invalid-feedback d-block">{{ form.new_quantity.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">Cantidad actual en sistema: {{ product.current_stock }} {{ product.get_unit_display }}</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Motivo del ajuste *</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-info">
+                                <i class="bi bi-check-lg me-1"></i>Aplicar Ajuste
+                            </button>
+                            <a href="{% url 'inventory:product_detail' product.pk %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

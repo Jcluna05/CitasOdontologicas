@@ -1,0 +1,251 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ product.name }} - Inventario{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">Inventario</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'inventory:product_list' %}">Productos</a></li>
+                    <li class="breadcrumb-item active">{{ product.name }}</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">{{ product.name }}</h1>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'inventory:stock_entry' product.pk %}" class="btn btn-success">
+                <i class="bi bi-plus-circle me-1"></i>Entrada
+            </a>
+            <a href="{% url 'inventory:stock_exit' product.pk %}" class="btn btn-danger">
+                <i class="bi bi-dash-circle me-1"></i>Salida
+            </a>
+            <a href="{% url 'inventory:product_edit' product.pk %}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i>Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Información Principal -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="mb-0">Información del Producto</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Código</label>
+                            <div class="fw-medium">{{ product.code }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Marca</label>
+                            <div class="fw-medium">{{ product.brand|default:"-" }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Categoría</label>
+                            <div>
+                                {% if product.category %}
+                                    <span class="badge" style="background-color: {{ product.category.color }}20; color: {{ product.category.color }};">
+                                        <i class="bi bi-{{ product.category.icon|default:'folder' }} me-1"></i>
+                                        {{ product.category.name }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Sin categoría</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Proveedor</label>
+                            <div class="fw-medium">{{ product.supplier.name|default:"-" }}</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted">Descripción</label>
+                            <div>{{ product.description|default:"-"|linebreaks }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Unidad</label>
+                            <div class="fw-medium">{{ product.get_unit_display }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Ubicación</label>
+                            <div class="fw-medium">{{ product.location|default:"-" }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Fecha de Vencimiento</label>
+                            <div class="fw-medium">
+                                {% if product.expiration_date %}
+                                    {{ product.expiration_date|date:"d/m/Y" }}
+                                    {% if product.is_expired %}
+                                        <span class="badge bg-danger ms-1">Vencido</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">No aplica</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial de Movimientos -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Historial de Movimientos</h5>
+                    <a href="{% url 'inventory:stock_adjustment' product.pk %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-sliders me-1"></i>Ajustar
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th>Usuario</th>
+                                    <th>Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movement in movements %}
+                                    <tr>
+                                        <td>
+                                            <div class="small">{{ movement.created_at|date:"d/m/Y" }}</div>
+                                            <div class="small text-muted">{{ movement.created_at|time:"H:i" }}</div>
+                                        </td>
+                                        <td>
+                                            {% if movement.movement_type == 'entry' %}
+                                                <span class="badge bg-success-subtle text-success">Entrada</span>
+                                            {% elif movement.movement_type == 'exit' %}
+                                                <span class="badge bg-danger-subtle text-danger">Salida</span>
+                                            {% else %}
+                                                <span class="badge bg-info-subtle text-info">Ajuste</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if movement.movement_type == 'entry' %}
+                                                <span class="text-success fw-medium">+{{ movement.quantity }}</span>
+                                            {% elif movement.movement_type == 'exit' %}
+                                                <span class="text-danger fw-medium">-{{ movement.quantity }}</span>
+                                            {% else %}
+                                                <span class="text-info fw-medium">{{ movement.quantity }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ movement.created_by.get_short_name|default:"-" }}</td>
+                                        <td>
+                                            <small class="text-muted">{{ movement.notes|default:"-"|truncatewords:10 }}</small>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">
+                                            No hay movimientos registrados
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral -->
+        <div class="col-lg-4">
+            <!-- Stock Actual -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-3">Stock Actual</h6>
+                    <div class="display-4 fw-bold mb-2 {% if product.stock_status == 'danger' %}text-danger{% elif product.stock_status == 'warning' %}text-warning{% else %}text-success{% endif %}">
+                        {{ product.current_stock }}
+                    </div>
+                    <div class="text-muted mb-3">{{ product.get_unit_display }}</div>
+
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar {% if product.stock_status == 'danger' %}bg-danger{% elif product.stock_status == 'warning' %}bg-warning{% else %}bg-success{% endif %}"
+                             style="width: {{ product.stock_percentage }}%"></div>
+                    </div>
+
+                    <div class="row text-center small">
+                        <div class="col-6">
+                            <div class="text-muted">Mínimo</div>
+                            <div class="fw-medium">{{ product.minimum_stock }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted">Máximo</div>
+                            <div class="fw-medium">{{ product.maximum_stock|default:"-" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Precios -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h6 class="mb-0">Precios</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Precio Compra:</span>
+                        <span class="fw-medium">${{ product.purchase_price|floatformat:2 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Precio Venta:</span>
+                        <span class="fw-medium">${{ product.sale_price|floatformat:2|default:"-" }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Valor en Stock:</span>
+                        <span class="fw-bold text-primary">
+                            ${{ product.current_stock|floatformat:2 }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h6 class="mb-0">Estado</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Activo:</span>
+                        {% if product.is_active %}
+                            <span class="badge bg-success">Sí</span>
+                        {% else %}
+                            <span class="badge bg-danger">No</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">Stock:</span>
+                        {% if product.stock_status == 'danger' %}
+                            <span class="badge bg-danger">Sin Stock</span>
+                        {% elif product.stock_status == 'warning' %}
+                            <span class="badge bg-warning text-dark">Bajo</span>
+                        {% else %}
+                            <span class="badge bg-success">OK</span>
+                        {% endif %}
+                    </div>
+                    {% if product.expiration_date %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Vencimiento:</span>
+                            {% if product.is_expired %}
+                                <span class="badge bg-danger">Vencido</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ product.expiration_date|date:"d/m/Y" }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

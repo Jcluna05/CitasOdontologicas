@@ -1,0 +1,91 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Categorías - Inventario{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">Inventario</a></li>
+                    <li class="breadcrumb-item active">Categorías</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">Categorías</h1>
+        </div>
+        <a href="{% url 'inventory:category_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nueva Categoría
+        </a>
+    </div>
+
+    <!-- Lista de categorías -->
+    <div class="row g-4">
+        {% for category in categories %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle p-3 me-3" style="background-color: {{ category.color }}20;">
+                                    <i class="bi bi-{{ category.icon|default:'folder' }} fs-4" style="color: {{ category.color }};"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">{{ category.name }}</h5>
+                                    <small class="text-muted">{{ category.product_count }} productos</small>
+                                </div>
+                            </div>
+                            {% if not category.is_active %}
+                                <span class="badge bg-secondary">Inactiva</span>
+                            {% endif %}
+                        </div>
+
+                        {% if category.description %}
+                            <p class="text-muted small mb-3">{{ category.description|truncatewords:15 }}</p>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if category.low_stock > 0 %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    {{ category.low_stock }} con stock bajo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success">Stock OK</span>
+                            {% endif %}
+
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'inventory:product_list' %}?category={{ category.pk }}"
+                                   class="btn btn-outline-secondary" title="Ver productos">
+                                    <i class="bi bi-box-seam"></i>
+                                </a>
+                                <a href="{% url 'inventory:category_edit' category.pk %}"
+                                   class="btn btn-outline-primary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'inventory:category_delete' category.pk %}"
+                                   class="btn btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-folder fs-1 text-muted mb-3 d-block"></i>
+                        <p class="text-muted mb-3">No hay categorías registradas</p>
+                        <a href="{% url 'inventory:category_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Crear primera categoría
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

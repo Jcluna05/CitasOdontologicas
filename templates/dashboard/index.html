@@ -1,211 +1,722 @@
 {% extends "base/base.html" %}
 {% load humanize %}
 
-{% block title %}Dashboard - Citas Odontológicas{% endblock %}
+{% block title %}Dashboard - {{ clinic.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard specific styles */
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--color-primary) 0%, #1e40af 100%);
+        border-radius: 1rem;
+        padding: 1.5rem 2rem;
+        color: white;
+        margin-bottom: 1.5rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .dashboard-header .date-display {
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    /* KPI Cards */
+    .kpi-card {
+        border: none;
+        border-radius: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        overflow: hidden;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .kpi-card .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .kpi-card .kpi-label {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .kpi-card .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* Status specific colors */
+    .kpi-total .kpi-icon { background: rgba(29, 78, 216, 0.1); color: #1D4ED8; }
+    .kpi-pending .kpi-icon { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+    .kpi-pending .kpi-value { color: #F59E0B; }
+    .kpi-confirmed .kpi-icon { background: rgba(6, 182, 212, 0.1); color: #06B6D4; }
+    .kpi-confirmed .kpi-value { color: #06B6D4; }
+    .kpi-attended .kpi-icon { background: rgba(22, 163, 74, 0.1); color: #16A34A; }
+    .kpi-attended .kpi-value { color: #16A34A; }
+    .kpi-cancelled .kpi-icon { background: rgba(220, 38, 38, 0.1); color: #DC2626; }
+    .kpi-cancelled .kpi-value { color: #DC2626; }
+    .kpi-noshow .kpi-icon { background: rgba(15, 23, 42, 0.1); color: #0F172A; }
+    .kpi-noshow .kpi-value { color: #0F172A; }
+
+    /* Agenda items */
+    .agenda-item {
+        padding: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.15s;
+    }
+
+    .agenda-item:hover {
+        background-color: #f8fafc;
+    }
+
+    .agenda-item:last-child {
+        border-bottom: none;
+    }
+
+    .agenda-time {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1D4ED8;
+        min-width: 55px;
+    }
+
+    .agenda-patient-name {
+        font-weight: 600;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .agenda-patient-name:hover {
+        color: #1D4ED8;
+    }
+
+    .procedure-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: white;
+    }
+
+    /* Status badges with correct colors */
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status-pending { background: #FEF3C7; color: #92400E; }
+    .status-confirmed { background: #CFFAFE; color: #0E7490; }
+    .status-attended { background: #D1FAE5; color: #065F46; }
+    .status-cancelled { background: #FEE2E2; color: #991B1B; }
+    .status-no_show { background: #E2E8F0; color: #1E293B; }
+
+    /* Alert panel */
+    .alert-panel {
+        border-left: 4px solid;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .alert-panel.alert-warning {
+        border-color: #F59E0B;
+        background: #FFFBEB;
+    }
+
+    .alert-panel.alert-danger {
+        border-color: #DC2626;
+        background: #FEF2F2;
+    }
+
+    .alert-panel.alert-info {
+        border-color: #06B6D4;
+        background: #ECFEFF;
+    }
+
+    .alert-panel .alert-title {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #0f172a;
+    }
+
+    .alert-panel .alert-message {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    /* Quick actions */
+    .quick-action-btn {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        background: white;
+        transition: all 0.15s;
+        color: #64748b;
+    }
+
+    .quick-action-btn:hover {
+        background: #f1f5f9;
+        color: #1D4ED8;
+        border-color: #1D4ED8;
+    }
+
+    .quick-action-btn.btn-success-action:hover {
+        color: #16A34A;
+        border-color: #16A34A;
+    }
+
+    .quick-action-btn.btn-danger-action:hover {
+        color: #DC2626;
+        border-color: #DC2626;
+    }
+
+    /* Available slots */
+    .slot-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        background: white;
+        transition: all 0.15s;
+    }
+
+    .slot-item:hover {
+        border-color: #1D4ED8;
+        background: #f8fafc;
+    }
+
+    .slot-date {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #1D4ED8;
+        background: rgba(29, 78, 216, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+
+    /* Widget headers */
+    .widget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .widget-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .widget-title i {
+        color: #64748b;
+    }
+
+    /* Mini chart styles */
+    .mini-stat {
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .mini-stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+
+    .mini-stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Progress bar for weekly stats */
+    .progress-thin {
+        height: 6px;
+        border-radius: 3px;
+        background: #e2e8f0;
+    }
+
+    .progress-thin .progress-bar {
+        border-radius: 3px;
+    }
+
+    /* Empty states */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* Gaps indicator */
+    .gap-indicator {
+        background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+        border: 1px dashed #F59E0B;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: 1rem;
+        }
+
+        .kpi-card .kpi-value {
+            font-size: 2rem;
+        }
+
+        .agenda-item {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
+<!-- Dashboard Header -->
+<div class="dashboard-header d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
-        <h1>Dashboard</h1>
-        <p class="text-muted mb-0">Bienvenido, {{ user.get_short_name|default:user.email }}</p>
+        <h1><i class="bi bi-heart-pulse me-2"></i>{{ clinic.name }}</h1>
+        <div class="date-display">
+            <i class="bi bi-calendar3 me-1"></i>
+            {{ today|date:"l, d \d\e F \d\e Y" }}
+        </div>
     </div>
-    <div>
-        <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary">
+    <div class="d-flex gap-2">
+        <a href="{% url 'appointments:appointment_day' %}" class="btn btn-outline-light">
+            <i class="bi bi-calendar-week me-1"></i> Ver Agenda
+        </a>
+        <a href="{% url 'appointments:appointment_create' %}" class="btn btn-light text-primary fw-semibold">
             <i class="bi bi-plus-lg me-1"></i> Nueva Cita
         </a>
     </div>
 </div>
 
-<!-- Stats Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="text-muted mb-1">Citas Hoy</h6>
-                        <h2 class="mb-0">{{ appointments_today_count }}</h2>
-                    </div>
-                    <div class="bg-primary bg-opacity-10 p-3 rounded">
-                        <i class="bi bi-calendar-check text-primary fs-4"></i>
-                    </div>
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card kpi-card kpi-total h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <div class="kpi-value text-primary">{{ stats.total }}</div>
+                    <div class="kpi-label">Total Hoy</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="text-muted mb-1">Pendientes</h6>
-                        <h2 class="mb-0">{{ pending_count }}</h2>
-                    </div>
-                    <div class="bg-warning bg-opacity-10 p-3 rounded">
-                        <i class="bi bi-hourglass-split text-warning fs-4"></i>
-                    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card kpi-card kpi-pending h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">{{ stats.pending }}</div>
+                    <div class="kpi-label">Pendientes</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="text-muted mb-1">Confirmadas</h6>
-                        <h2 class="mb-0">{{ confirmed_count }}</h2>
-                    </div>
-                    <div class="bg-info bg-opacity-10 p-3 rounded">
-                        <i class="bi bi-check-circle text-info fs-4"></i>
-                    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card kpi-card kpi-confirmed h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">{{ stats.confirmed }}</div>
+                    <div class="kpi-label">Confirmadas</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="text-muted mb-1">Total Pacientes</h6>
-                        <h2 class="mb-0">{{ patients_count }}</h2>
-                    </div>
-                    <div class="bg-success bg-opacity-10 p-3 rounded">
-                        <i class="bi bi-people text-success fs-4"></i>
-                    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card kpi-card kpi-attended h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon">
+                    <i class="bi bi-check2-all"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">{{ stats.attended }}</div>
+                    <div class="kpi-label">Atendidos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card kpi-card kpi-cancelled h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">{{ stats.cancelled }}</div>
+                    <div class="kpi-label">Cancelados</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card kpi-card kpi-noshow h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon">
+                    <i class="bi bi-person-x"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">{{ stats.no_show }}</div>
+                    <div class="kpi-label">No asistieron</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Main Grid -->
 <div class="row g-4">
-    <!-- Today's Appointments -->
+    <!-- Left Column - Agenda de Hoy -->
     <div class="col-lg-8">
+        <!-- Alertas Inteligentes (solo si hay) -->
+        {% if alerts %}
+        <div class="card mb-4">
+            <div class="widget-header">
+                <div class="widget-title">
+                    <i class="bi bi-bell text-warning"></i>
+                    Alertas del Día
+                    <span class="badge bg-warning text-dark ms-2">{{ alerts|length }}</span>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                {% for alert in alerts %}
+                <div class="alert-panel alert-{{ alert.type }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="alert-title">
+                                <i class="bi bi-{{ alert.icon }} me-1"></i>
+                                {{ alert.title }}
+                            </div>
+                            <div class="alert-message">{{ alert.message }}</div>
+                        </div>
+                        {% if alert.action_url %}
+                        <a href="{{ alert.action_url }}" class="btn btn-sm btn-outline-dark">
+                            {{ alert.action_text }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Agenda de Hoy -->
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-calendar3 me-2"></i>Citas de Hoy</span>
+            <div class="widget-header">
+                <div class="widget-title">
+                    <i class="bi bi-calendar3"></i>
+                    Agenda de Hoy
+                </div>
                 <a href="{% url 'appointments:appointment_day' %}" class="btn btn-sm btn-outline-primary">
-                    Ver agenda completa
+                    <i class="bi bi-arrow-right me-1"></i> Ver completa
                 </a>
             </div>
             <div class="card-body p-0">
                 {% if appointments_today %}
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Hora</th>
-                                <th>Paciente</th>
-                                <th>Procedimiento</th>
-                                <th>Estado</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for apt in appointments_today %}
-                            <tr>
-                                <td>
-                                    <strong>{{ apt.start_time|time:"H:i" }}</strong>
-                                    <small class="text-muted">- {{ apt.end_time|time:"H:i" }}</small>
-                                </td>
-                                <td>
-                                    <a href="{% url 'patients:patient_detail' apt.patient.pk %}">
-                                        {{ apt.patient.full_name }}
-                                    </a>
-                                    {% if apt.patient.has_warnings %}
-                                    <i class="bi bi-exclamation-triangle text-warning" title="Ver alertas"></i>
+                    {% for apt in appointments_today %}
+                    <div class="agenda-item d-flex align-items-center gap-3">
+                        <!-- Hora -->
+                        <div class="agenda-time">
+                            {{ apt.start_time|time:"H:i" }}
+                        </div>
+
+                        <!-- Info Principal -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <a href="{% url 'patients:patient_detail' apt.patient.pk %}" class="agenda-patient-name">
+                                    {{ apt.patient.full_name }}
+                                </a>
+                                {% if apt.patient.has_warnings %}
+                                    {% if apt.patient.has_acute_pain %}
+                                    <span class="badge bg-danger" title="Dolor agudo"><i class="bi bi-exclamation-circle"></i></span>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    {% if apt.procedure_type %}
-                                    <span class="badge" style="background-color: {{ apt.procedure_type.color }}">
-                                        {{ apt.procedure_type.name }}
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
+                                    {% if apt.patient.has_allergies %}
+                                    <span class="badge bg-warning text-dark" title="Alergias"><i class="bi bi-exclamation-triangle"></i></span>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge bg-{{ apt.status_color }}">
-                                        {{ apt.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="{% url 'appointments:appointment_detail' apt.pk %}" class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                    {% if apt.patient.has_anxiety %}
+                                    <span class="badge bg-info" title="Ansiedad dental"><i class="bi bi-emoji-frown"></i></span>
+                                    {% endif %}
+                                    {% if apt.patient.is_child %}
+                                    <span class="badge bg-secondary" title="Paciente pediátrico"><i class="bi bi-person"></i></span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                {% if apt.procedure_type %}
+                                <span class="procedure-badge" style="background-color: {{ apt.procedure_type.color }}">
+                                    {{ apt.procedure_type.name }}
+                                </span>
+                                {% endif %}
+                                <small class="text-muted">
+                                    <i class="bi bi-person-badge me-1"></i>{{ apt.professional }}
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div>
+                            <span class="status-badge status-{{ apt.status }}">
+                                {{ apt.get_status_display }}
+                            </span>
+                        </div>
+
+                        <!-- Acciones Rápidas -->
+                        <div class="d-flex gap-1">
+                            {% if apt.status == 'pending' or apt.status == 'confirmed' %}
+                            <a href="{% url 'appointments:appointment_attended' apt.pk %}"
+                               class="quick-action-btn btn-success-action"
+                               title="Marcar como atendido">
+                                <i class="bi bi-check-lg"></i>
+                            </a>
+                            {% endif %}
+                            {% if apt.status == 'pending' %}
+                            <a href="{% url 'appointments:appointment_confirm' apt.pk %}"
+                               class="quick-action-btn"
+                               title="Confirmar">
+                                <i class="bi bi-check-circle"></i>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'appointments:appointment_detail' apt.pk %}"
+                               class="quick-action-btn"
+                               title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if apt.can_be_cancelled %}
+                            <a href="{% url 'appointments:appointment_cancel' apt.pk %}"
+                               class="quick-action-btn btn-danger-action"
+                               title="Cancelar">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    {% if appointments_today|length >= 10 %}
+                    <div class="text-center py-3 border-top">
+                        <a href="{% url 'appointments:appointment_day' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-arrow-down me-1"></i> Ver más citas
+                        </a>
+                    </div>
+                    {% endif %}
                 {% else %}
-                <div class="text-center py-5">
-                    <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-2">No hay citas programadas para hoy</p>
-                    <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary">
-                        <i class="bi bi-plus-lg me-1"></i> Crear cita
-                    </a>
-                </div>
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-x d-block"></i>
+                        <p class="mb-3">No hay citas programadas para hoy</p>
+                        <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i> Crear primera cita
+                        </a>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions & Upcoming -->
+    <!-- Right Column -->
     <div class="col-lg-4">
-        <!-- Quick Actions -->
+        <!-- Huecos disponibles (si existen) -->
+        {% if schedule_gaps %}
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-lightning me-2"></i>Acciones Rápidas
+            <div class="widget-header">
+                <div class="widget-title">
+                    <i class="bi bi-clock-history text-warning"></i>
+                    Huecos Libres Hoy
+                </div>
             </div>
             <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{% url 'appointments:appointment_create' %}" class="btn btn-primary">
-                        <i class="bi bi-calendar-plus me-2"></i> Nueva Cita
-                    </a>
-                    <a href="{% url 'patients:patient_create' %}" class="btn btn-outline-primary">
-                        <i class="bi bi-person-plus me-2"></i> Nuevo Paciente
-                    </a>
-                    <a href="{% url 'appointments:availability' %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-clock me-2"></i> Ver Disponibilidad
+                {% for gap in schedule_gaps %}
+                <div class="gap-indicator d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold">{{ gap.start_time|time:"H:i" }} - {{ gap.end_time|time:"H:i" }}</div>
+                        <small class="text-muted">{{ gap.professional }} - {{ gap.duration_minutes }} min</small>
+                    </div>
+                    <a href="{% url 'appointments:appointment_create' %}?date={{ today|date:'Y-m-d' }}&time={{ gap.start_time|time:'H:i' }}&professional={{ gap.professional.pk }}"
+                       class="btn btn-sm btn-warning">
+                        <i class="bi bi-plus"></i> Agendar
                     </a>
                 </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Disponibilidad Rápida -->
+        <div class="card mb-4">
+            <div class="widget-header">
+                <div class="widget-title">
+                    <i class="bi bi-lightning-charge"></i>
+                    Agendar Rápido
+                </div>
+            </div>
+            <div class="card-body">
+                {% if available_slots %}
+                    {% for slot in available_slots %}
+                    <div class="slot-item">
+                        <div class="flex-grow-1">
+                            <span class="slot-date me-2">{{ slot.date_display }}</span>
+                            <strong>{{ slot.start_time|time:"H:i" }}</strong>
+                            <small class="text-muted d-block mt-1">{{ slot.professional }}</small>
+                        </div>
+                        <a href="{% url 'appointments:appointment_create' %}?date={{ slot.date|date:'Y-m-d' }}&time={{ slot.start_time|time:'H:i' }}&professional={{ slot.professional_id }}"
+                           class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    <a href="{% url 'appointments:availability' %}" class="btn btn-outline-primary w-100 mt-2">
+                        <i class="bi bi-calendar-range me-1"></i> Ver más disponibilidad
+                    </a>
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-calendar-x d-block mb-2" style="font-size: 1.5rem;"></i>
+                        <small>No hay slots configurados</small>
+                    </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Upcoming Appointments -->
+        <!-- Indicadores Semanales -->
+        <div class="card mb-4">
+            <div class="widget-header">
+                <div class="widget-title">
+                    <i class="bi bi-graph-up"></i>
+                    Esta Semana
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-0 text-center mb-3">
+                    <div class="col-4 border-end">
+                        <div class="mini-stat">
+                            <div class="mini-stat-value text-primary">{{ weekly_stats.total }}</div>
+                            <div class="mini-stat-label">Citas</div>
+                        </div>
+                    </div>
+                    <div class="col-4 border-end">
+                        <div class="mini-stat">
+                            <div class="mini-stat-value text-success">{{ weekly_stats.attended }}</div>
+                            <div class="mini-stat-label">Atendidas</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mini-stat">
+                            <div class="mini-stat-value {% if weekly_stats.no_show_rate > 10 %}text-danger{% else %}text-muted{% endif %}">
+                                {{ weekly_stats.no_show_rate }}%
+                            </div>
+                            <div class="mini-stat-label">Inasistencia</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if weekly_stats.top_procedures %}
+                <div class="mb-3">
+                    <small class="text-muted text-uppercase fw-semibold">Procedimientos frecuentes</small>
+                    {% for proc in weekly_stats.top_procedures %}
+                    <div class="d-flex align-items-center mt-2">
+                        <span class="me-2" style="width: 12px; height: 12px; border-radius: 50%; background-color: {{ proc.procedure_type__color|default:'#64748b' }};"></span>
+                        <span class="flex-grow-1 small">{{ proc.procedure_type__name|default:"Sin asignar" }}</span>
+                        <span class="badge bg-light text-dark">{{ proc.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if weekly_stats.professionals_load %}
+                <div>
+                    <small class="text-muted text-uppercase fw-semibold">Carga por profesional</small>
+                    {% for prof in weekly_stats.professionals_load %}
+                    <div class="d-flex align-items-center mt-2">
+                        <span class="me-2" style="width: 12px; height: 12px; border-radius: 50%; background-color: {{ prof.professional__color|default:'#1D4ED8' }};"></span>
+                        <span class="flex-grow-1 small">Dr(a). {{ prof.professional__user__first_name }} {{ prof.professional__user__last_name }}</span>
+                        <span class="badge bg-light text-dark">{{ prof.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Próximas Citas -->
         <div class="card">
-            <div class="card-header">
-                <i class="bi bi-calendar-week me-2"></i>Próximas Citas
+            <div class="widget-header">
+                <div class="widget-title">
+                    <i class="bi bi-calendar-week"></i>
+                    Próximos Días
+                </div>
             </div>
             <div class="card-body p-0">
                 {% if upcoming_appointments %}
-                <ul class="list-group list-group-flush">
                     {% for apt in upcoming_appointments %}
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong>{{ apt.patient.full_name }}</strong>
-                                <br>
-                                <small class="text-muted">
-                                    {{ apt.date|date:"d/m" }} a las {{ apt.start_time|time:"H:i" }}
-                                </small>
-                            </div>
-                            <span class="badge bg-{{ apt.status_color }}">
-                                {{ apt.get_status_display }}
-                            </span>
+                    <div class="agenda-item d-flex align-items-center gap-3">
+                        <div>
+                            <div class="fw-semibold small">{{ apt.date|date:"d/m" }}</div>
+                            <div class="text-muted small">{{ apt.start_time|time:"H:i" }}</div>
                         </div>
-                    </li>
+                        <div class="flex-grow-1">
+                            <div class="small fw-semibold">{{ apt.patient.full_name }}</div>
+                            {% if apt.procedure_type %}
+                            <div class="small text-muted">{{ apt.procedure_type.name }}</div>
+                            {% endif %}
+                        </div>
+                        <span class="status-badge status-{{ apt.status }}">
+                            {{ apt.get_status_display }}
+                        </span>
+                    </div>
                     {% endfor %}
-                </ul>
                 {% else %}
-                <div class="text-center py-4">
-                    <p class="text-muted mb-0">No hay citas próximas</p>
-                </div>
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-calendar-check d-block mb-2"></i>
+                        <small>No hay citas próximas</small>
+                    </div>
                 {% endif %}
             </div>
         </div>

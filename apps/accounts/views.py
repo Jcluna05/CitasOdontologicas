@@ -12,11 +12,13 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 
-from apps.appointments.models import Appointment
+from apps.appointments.models import Appointment, ProcedureType
 from apps.patients.models import Patient
+from apps.clinic.models import Clinic
 
 from .forms import CustomAuthenticationForm, CustomUserCreationForm, CustomUserChangeForm, ProfileForm
 from .models import User
+from .services import DashboardService
 
 
 class CustomLoginView(LoginView):
@@ -37,43 +39,43 @@ class CustomLogoutView(LogoutView):
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
-    """Dashboard principal del sistema."""
+    """Dashboard principal del sistema - Centro de operaciones clínicas."""
 
     template_name = 'dashboard/index.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        today = timezone.now().date()
 
-        # Citas de hoy
-        appointments_today = Appointment.objects.filter(date=today)
-        if self.request.user.is_professional:
-            appointments_today = appointments_today.filter(
-                professional__user=self.request.user
-            )
+        # Inicializar servicio
+        service = DashboardService(self.request.user)
 
-        context['appointments_today'] = appointments_today.order_by('start_time')[:10]
-        context['appointments_today_count'] = appointments_today.count()
+        # Datos del header
+        context['today'] = timezone.now()
+        context['clinic'] = Clinic.get_default()
 
-        # Estadísticas rápidas
-        context['patients_count'] = Patient.objects.count()
-        context['pending_count'] = Appointment.objects.filter(
-            date=today,
-            status=Appointment.Status.PENDING
-        ).count()
-        context['confirmed_count'] = Appointment.objects.filter(
-            date=today,
-            status=Appointment.Status.CONFIRMED
-        ).count()
+        # KPIs del día
+        context['stats'] = service.get_today_stats()
 
-        # Próximas citas (próximos 7 días)
-        from datetime import timedelta
-        week_later = today + timedelta(days=7)
-        context['upcoming_appointments'] = Appointment.objects.filter(
-            date__gt=today,
-            date__lte=week_later,
-            status__in=[Appointment.Status.PENDING, Appointment.Status.CONFIRMED]
-        ).order_by('date', 'start_time')[:5]
+        # Agenda de hoy
+        context['appointments_today'] = service.get_today_appointments(limit=10)
+
+        # Alertas inteligentes
+        context['alerts'] = service.get_smart_alerts()
+
+        # Slots disponibles
+        context['available_slots'] = service.get_available_slots(limit=5)
+
+        # Estadísticas semanales
+        context['weekly_stats'] = service.get_weekly_stats()
+
+        # Huecos en la agenda
+        context['schedule_gaps'] = service.get_gaps_in_schedule(min_gap_minutes=45)
+
+        # Próximas citas
+        context['upcoming_appointments'] = service.get_upcoming_appointments(days=7, limit=5)
+
+        # Tipos de procedimiento para el widget de disponibilidad
+        context['procedure_types'] = ProcedureType.objects.filter(is_active=True).order_by('order')
 
         return context
 

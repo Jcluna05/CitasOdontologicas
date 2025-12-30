@@ -67,8 +67,9 @@ cp .env.example .env
 # Editar .env según sea necesario
 ```
 
-5. **Ejecutar migraciones**
+5. **Crear y ejecutar migraciones**
 ```bash
+python manage.py makemigrations accounts clinic patients appointments notifications
 python manage.py migrate
 ```
 

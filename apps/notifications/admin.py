@@ -4,12 +4,13 @@ Configuración del admin para la app notifications.
 
 from django.contrib import admin
 from django.utils.html import format_html
+from unfold.admin import ModelAdmin
 
 from .models import NotificationLog
 
 
 @admin.register(NotificationLog)
-class NotificationLogAdmin(admin.ModelAdmin):
+class NotificationLogAdmin(ModelAdmin):
     """Admin para el modelo NotificationLog."""
 
     list_display = (

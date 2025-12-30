@@ -4,12 +4,13 @@ Configuración del admin para la app clinic.
 
 from django.contrib import admin
 from django.utils.html import format_html
+from unfold.admin import ModelAdmin, TabularInline
 
 from .models import Clinic, Professional, Schedule, MessageTemplate
 
 
 @admin.register(Clinic)
-class ClinicAdmin(admin.ModelAdmin):
+class ClinicAdmin(ModelAdmin):
     """Admin para el modelo Clinic."""
 
     list_display = ('name', 'phone', 'email', 'updated_at')
@@ -28,7 +29,7 @@ class ClinicAdmin(admin.ModelAdmin):
     )
 
 
-class ScheduleInline(admin.TabularInline):
+class ScheduleInline(TabularInline):
     """Inline para horarios."""
 
     model = Schedule
@@ -37,7 +38,7 @@ class ScheduleInline(admin.TabularInline):
 
 
 @admin.register(Professional)
-class ProfessionalAdmin(admin.ModelAdmin):
+class ProfessionalAdmin(ModelAdmin):
     """Admin para el modelo Professional."""
 
     list_display = ('__str__', 'specialty', 'color_display', 'is_active')
@@ -67,7 +68,7 @@ class ProfessionalAdmin(admin.ModelAdmin):
 
 
 @admin.register(Schedule)
-class ScheduleAdmin(admin.ModelAdmin):
+class ScheduleAdmin(ModelAdmin):
     """Admin para el modelo Schedule."""
 
     list_display = ('__str__', 'weekday', 'start_time', 'end_time', 'is_active')
@@ -76,7 +77,7 @@ class ScheduleAdmin(admin.ModelAdmin):
 
 
 @admin.register(MessageTemplate)
-class MessageTemplateAdmin(admin.ModelAdmin):
+class MessageTemplateAdmin(ModelAdmin):
     """Admin para el modelo MessageTemplate."""
 
     list_display = ('template_type', 'clinic', 'subject', 'is_active')

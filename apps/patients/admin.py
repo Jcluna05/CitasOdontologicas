@@ -4,11 +4,12 @@ Configuración del admin para la app patients.
 
 from django.contrib import admin
 from django.utils.html import format_html
+from unfold.admin import ModelAdmin, TabularInline
 
 from .models import Patient, PatientEvent
 
 
-class PatientEventInline(admin.TabularInline):
+class PatientEventInline(TabularInline):
     """Inline para eventos del paciente."""
 
     model = PatientEvent
@@ -18,7 +19,7 @@ class PatientEventInline(admin.TabularInline):
 
 
 @admin.register(Patient)
-class PatientAdmin(admin.ModelAdmin):
+class PatientAdmin(ModelAdmin):
     """Admin para el modelo Patient."""
 
     list_display = (
@@ -75,7 +76,7 @@ class PatientAdmin(admin.ModelAdmin):
 
 
 @admin.register(PatientEvent)
-class PatientEventAdmin(admin.ModelAdmin):
+class PatientEventAdmin(ModelAdmin):
     """Admin para el modelo PatientEvent."""
 
     list_display = ('patient', 'event_type', 'description', 'created_by', 'created_at')

@@ -4,12 +4,13 @@ Configuración del admin para la app appointments.
 
 from django.contrib import admin
 from django.utils.html import format_html
+from unfold.admin import ModelAdmin, TabularInline
 
 from .models import ProcedureType, Appointment, AppointmentStatusLog
 
 
 @admin.register(ProcedureType)
-class ProcedureTypeAdmin(admin.ModelAdmin):
+class ProcedureTypeAdmin(ModelAdmin):
     """Admin para el modelo ProcedureType."""
 
     list_display = (
@@ -31,7 +32,7 @@ class ProcedureTypeAdmin(admin.ModelAdmin):
     color_display.short_description = 'Color'
 
 
-class AppointmentStatusLogInline(admin.TabularInline):
+class AppointmentStatusLogInline(TabularInline):
     """Inline para logs de estado."""
 
     model = AppointmentStatusLog
@@ -44,7 +45,7 @@ class AppointmentStatusLogInline(admin.TabularInline):
 
 
 @admin.register(Appointment)
-class AppointmentAdmin(admin.ModelAdmin):
+class AppointmentAdmin(ModelAdmin):
     """Admin para el modelo Appointment."""
 
     list_display = (
@@ -102,7 +103,7 @@ class AppointmentAdmin(admin.ModelAdmin):
 
 
 @admin.register(AppointmentStatusLog)
-class AppointmentStatusLogAdmin(admin.ModelAdmin):
+class AppointmentStatusLogAdmin(ModelAdmin):
     """Admin para el modelo AppointmentStatusLog."""
 
     list_display = (

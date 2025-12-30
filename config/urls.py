@@ -43,13 +43,8 @@ urlpatterns = [
 # Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
-
-    # Debug toolbar
-    import debug_toolbar
-    urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ] + urlpatterns
+    if hasattr(settings, 'STATICFILES_DIRS') and settings.STATICFILES_DIRS:
+        urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
 
 # Admin site customization
 admin.site.site_header = 'Citas Odontológicas'

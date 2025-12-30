@@ -37,7 +37,7 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     # Root redirect
-    path('', RedirectView.as_view(pattern_name='dashboard', permanent=False)),
+    path('', RedirectView.as_view(pattern_name='accounts:dashboard', permanent=False)),
 ]
 
 # Serve media files in development

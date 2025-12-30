@@ -1,0 +1,78 @@
+{% extends "base/base.html" %}
+
+{% block title %}Configuración del Consultorio{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-gear me-2"></i>Configuración del Consultorio</h1>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-building me-2"></i>Información del Consultorio
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre del Consultorio</label>
+                            {{ form.name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Logo</label>
+                            {{ form.logo }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Teléfono</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">WhatsApp</label>
+                            {{ form.whatsapp }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Dirección</label>
+                            {{ form.address }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Duración por defecto (min)</label>
+                            {{ form.appointment_duration_default }}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                {{ form.allow_online_booking }}
+                                <label class="form-check-label">Permitir reservas online</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+            </button>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-info-circle me-2"></i>Información
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">
+                        Configure aquí la información básica del consultorio. Esta información aparecerá en los mensajes de recordatorio y confirmación de citas.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

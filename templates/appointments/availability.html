@@ -1,0 +1,93 @@
+{% extends "base/base.html" %}
+
+{% block title %}Disponibilidad - Citas Odontológicas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-clock me-2"></i>Disponibilidad Inteligente</h1>
+    <p class="text-muted">Encuentra slots disponibles para agendar citas</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-search me-2"></i>Buscar Disponibilidad
+            </div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha</label>
+                        <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Profesional</label>
+                        <select name="professional" class="form-select">
+                            <option value="">Seleccione...</option>
+                            {% for prof in professionals %}
+                            <option value="{{ prof.pk }}" {% if selected_professional.pk == prof.pk %}selected{% endif %}>
+                                {{ prof }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Procedimiento</label>
+                        <select name="procedure" class="form-select">
+                            <option value="">Seleccione...</option>
+                            {% for proc in procedures %}
+                            <option value="{{ proc.pk }}" {% if selected_procedure.pk == proc.pk %}selected{% endif %}>
+                                {{ proc.name }} ({{ proc.duration_minutes }} min)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i> Buscar Slots
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Slots Disponibles
+                    {% if selected_date %}
+                    - {{ selected_date|date:"l, d F Y" }}
+                    {% endif %}
+                </span>
+            </div>
+            <div class="card-body">
+                {% if available_slots %}
+                <div class="row g-2">
+                    {% for slot in available_slots %}
+                    <div class="col-md-4 col-sm-6">
+                        <a href="{% url 'appointments:appointment_create' %}?date={{ selected_date|date:'Y-m-d' }}&time={{ slot.start_time|time:'H:i' }}&professional={{ selected_professional.pk }}"
+                           class="btn btn-outline-primary w-100">
+                            <i class="bi bi-clock me-1"></i>
+                            {{ slot.formatted }}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif request.GET.professional and request.GET.procedure %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2">No hay slots disponibles para esta combinación</p>
+                    <p class="text-muted">Intente con otra fecha o profesional</p>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-calendar2-week text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2">Seleccione fecha, profesional y procedimiento para ver la disponibilidad</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

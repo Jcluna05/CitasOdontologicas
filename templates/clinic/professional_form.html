@@ -1,0 +1,64 @@
+{% extends "base/base.html" %}
+
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Profesional{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{% url 'clinic:professional_list' %}">Profesionales</a></li>
+            <li class="breadcrumb-item active">{% if object %}Editar{% else %}Nuevo{% endif %}</li>
+        </ol>
+    </nav>
+    <h1>{% if object %}Editar Profesional{% else %}Nuevo Profesional{% endif %}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <form method="post">
+            {% csrf_token %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Usuario *</label>
+                            {{ form.user }}
+                            <small class="text-muted">El usuario debe tener rol "Profesional"</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Consultorio *</label>
+                            {{ form.clinic }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Especialidad</label>
+                            {{ form.specialty }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">N° Colegiatura</label>
+                            {{ form.license_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Color</label>
+                            {{ form.color }}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                {{ form.is_active }}
+                                <label class="form-check-label">Activo</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Guardar
+                    </button>
+                    <a href="{% url 'clinic:professional_list' %}" class="btn btn-outline-secondary">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends "base/base.html" %}
+
+{% block title %}Agenda - {{ selected_date|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-calendar3 me-2"></i>Agenda del Día</h1>
+    </div>
+    <div>
+        <a href="{% url 'appointments:appointment_create' %}?date={{ selected_date|date:'Y-m-d' }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Nueva Cita
+        </a>
+    </div>
+</div>
+
+<!-- Date Navigation -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <a href="{% url 'appointments:appointment_day' %}?date={{ prev_date|date:'Y-m-d' }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </div>
+            <div class="col">
+                <form method="get" class="row g-2 align-items-center">
+                    <div class="col-auto">
+                        <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control" onchange="this.form.submit()">
+                    </div>
+                    <div class="col-auto">
+                        <h5 class="mb-0">
+                            {{ selected_date|date:"l, d F Y" }}
+                            {% if selected_date == today %}
+                            <span class="badge bg-primary ms-2">Hoy</span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <select name="professional" class="form-select" onchange="this.form.submit()">
+                            <option value="">Todos los profesionales</option>
+                            {% for prof in professionals %}
+                            <option value="{{ prof.pk }}" {% if request.GET.professional == prof.pk|stringformat:"d" %}selected{% endif %}>
+                                {{ prof }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'appointments:appointment_day' %}?date={{ next_date|date:'Y-m-d' }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ total_count }}</h3>
+                <small class="text-muted">Total de citas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning bg-opacity-10">
+            <div class="card-body text-center">
+                <h3 class="mb-0 text-warning">{{ pending_count }}</h3>
+                <small class="text-muted">Pendientes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info bg-opacity-10">
+            <div class="card-body text-center">
+                <h3 class="mb-0 text-info">{{ confirmed_count }}</h3>
+                <small class="text-muted">Confirmadas</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointments List -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if appointments %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">Hora</th>
+                        <th>Paciente</th>
+                        <th>Procedimiento</th>
+                        <th>Profesional</th>
+                        <th>Estado</th>
+                        <th style="width: 200px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for apt in appointments %}
+                    <tr class="{% if apt.status == 'no_show' %}table-dark{% elif apt.status == 'cancelled' %}table-danger{% elif apt.status == 'attended' %}table-success{% endif %}">
+                        <td>
+                            <strong>{{ apt.start_time|time:"H:i" }}</strong>
+                            <small class="text-muted d-block">{{ apt.end_time|time:"H:i" }}</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'patients:patient_detail' apt.patient.pk %}" class="text-decoration-none">
+                                <strong>{{ apt.patient.full_name }}</strong>
+                            </a>
+                            {% if apt.patient.has_warnings %}
+                            <i class="bi bi-exclamation-triangle text-warning" title="Ver alertas"></i>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-telephone me-1"></i>{{ apt.patient.phone }}
+                            </small>
+                        </td>
+                        <td>
+                            {% if apt.procedure_type %}
+                            <span class="badge" style="background-color: {{ apt.procedure_type.color }}">
+                                {{ apt.procedure_type.name }}
+                            </span>
+                            <small class="text-muted d-block">{{ apt.procedure_type.duration_minutes }} min</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ apt.professional }}</td>
+                        <td>
+                            <span class="badge bg-{{ apt.status_color }}">
+                                {{ apt.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'appointments:appointment_detail' apt.pk %}" class="btn btn-outline-secondary" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                {% if apt.status == 'pending' %}
+                                <form method="post" action="{% url 'appointments:appointment_confirm' apt.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-info" title="Confirmar">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                {% if apt.status in 'pending,confirmed' %}
+                                <form method="post" action="{% url 'appointments:appointment_attended' apt.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-success" title="Marcar atendido">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'appointments:appointment_no_show' apt.pk %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-dark" title="No asistió" onclick="return confirm('¿Marcar como no asistió?')">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-2">No hay citas programadas para este día</p>
+            <a href="{% url 'appointments:appointment_create' %}?date={{ selected_date|date:'Y-m-d' }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Crear cita
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

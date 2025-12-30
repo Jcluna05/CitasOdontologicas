@@ -1,0 +1,92 @@
+{% extends "base/base.html" %}
+
+{% block title %}Triage - {{ patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{% url 'patients:patient_list' %}">Pacientes</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'patients:patient_detail' object.pk %}">{{ object.full_name }}</a></li>
+            <li class="breadcrumb-item active">Triage</li>
+        </ol>
+    </nav>
+    <h1>Actualizar Triage</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <form method="post">
+            {% csrf_token %}
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-heart-pulse me-2"></i>Checklist de Triage
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                {{ form.has_acute_pain }}
+                                <label class="form-check-label">
+                                    <i class="bi bi-lightning text-danger me-1"></i>
+                                    Dolor agudo
+                                </label>
+                                <small class="text-muted d-block">Requiere atención prioritaria</small>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                {{ form.has_allergies }}
+                                <label class="form-check-label">
+                                    <i class="bi bi-exclamation-circle text-warning me-1"></i>
+                                    Tiene alergias
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Detalle de alergias</label>
+                            {{ form.allergies_detail }}
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                {{ form.has_anxiety }}
+                                <label class="form-check-label">
+                                    <i class="bi bi-heart text-info me-1"></i>
+                                    Ansiedad dental
+                                </label>
+                                <small class="text-muted d-block">Requiere trato especial</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.is_child }}
+                                <label class="form-check-label">
+                                    <i class="bi bi-emoji-smile me-1"></i>
+                                    Es niño
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.is_elderly }}
+                                <label class="form-check-label">
+                                    <i class="bi bi-person me-1"></i>
+                                    Adulto mayor
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Guardar
+                    </button>
+                    <a href="{% url 'patients:patient_detail' object.pk %}" class="btn btn-outline-secondary">
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

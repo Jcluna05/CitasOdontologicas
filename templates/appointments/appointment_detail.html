@@ -1,0 +1,287 @@
+{% extends "base/base.html" %}
+
+{% block title %}Cita - {{ appointment.patient.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{% url 'appointments:appointment_day' %}">Agenda</a></li>
+                <li class="breadcrumb-item active">Detalle de Cita</li>
+            </ol>
+        </nav>
+        <h1>Cita de {{ appointment.patient.full_name }}</h1>
+    </div>
+    <div class="btn-group">
+        {% if appointment.can_be_cancelled %}
+        <a href="{% url 'appointments:appointment_edit' appointment.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i> Editar
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Info -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-calendar-event me-2"></i>Información de la Cita</span>
+                <span class="badge bg-{{ appointment.status_color }} fs-6">
+                    {{ appointment.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th class="text-muted" style="width: 40%;">Fecha</th>
+                                <td>
+                                    <strong>{{ appointment.date|date:"l, d F Y" }}</strong>
+                                    {% if appointment.is_today %}
+                                    <span class="badge bg-primary">Hoy</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Hora</th>
+                                <td>
+                                    {{ appointment.start_time|time:"H:i" }} - {{ appointment.end_time|time:"H:i" }}
+                                    <small class="text-muted">({{ appointment.duration_minutes }} min)</small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Procedimiento</th>
+                                <td>
+                                    {% if appointment.procedure_type %}
+                                    <span class="badge" style="background-color: {{ appointment.procedure_type.color }}">
+                                        {{ appointment.procedure_type.name }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Profesional</th>
+                                <td>{{ appointment.professional }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th class="text-muted" style="width: 40%;">Paciente</th>
+                                <td>
+                                    <a href="{% url 'patients:patient_detail' appointment.patient.pk %}">
+                                        {{ appointment.patient.full_name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Teléfono</th>
+                                <td>{{ appointment.patient.phone }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">WhatsApp</th>
+                                <td>{{ appointment.patient.whatsapp|default:appointment.patient.phone }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Recordatorio</th>
+                                <td>
+                                    {% if appointment.reminder_sent %}
+                                    <span class="badge bg-success">Enviado</span>
+                                    <small class="text-muted">{{ appointment.reminder_sent_at|date:"d/m H:i" }}</small>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {% if appointment.notes %}
+                <hr>
+                <h6>Notas</h6>
+                <p class="text-muted mb-0">{{ appointment.notes }}</p>
+                {% endif %}
+
+                {% if appointment.cancellation_reason %}
+                <hr>
+                <div class="alert alert-danger mb-0">
+                    <h6><i class="bi bi-x-circle me-2"></i>Motivo de Cancelación</h6>
+                    <p class="mb-0">{{ appointment.cancellation_reason }}</p>
+                    <small class="text-muted">Cancelado: {{ appointment.cancelled_at|date:"d/m/Y H:i" }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Patient Alerts -->
+        {% if appointment.patient.has_warnings %}
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning bg-opacity-10">
+                <i class="bi bi-exclamation-triangle me-2"></i>Alertas del Paciente
+            </div>
+            <div class="card-body">
+                {% for alert in appointment.patient.triage_alerts %}
+                <span class="badge bg-{{ alert.type }} me-1 mb-1">{{ alert.message }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- WhatsApp Message -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-whatsapp me-2"></i>Mensaje para WhatsApp</span>
+                <button class="btn btn-sm btn-success" onclick="copyToClipboard(document.getElementById('whatsapp-msg').innerText)">
+                    <i class="bi bi-clipboard me-1"></i> Copiar
+                </button>
+            </div>
+            <div class="card-body">
+                <pre id="whatsapp-msg" class="mb-0 p-3 bg-light rounded" style="white-space: pre-wrap;">{{ whatsapp_message }}</pre>
+            </div>
+        </div>
+
+        <!-- Status Logs -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-2"></i>Historial de Cambios
+            </div>
+            <div class="card-body p-0">
+                {% if status_logs %}
+                <ul class="list-group list-group-flush">
+                    {% for log in status_logs %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                {% if log.previous_status %}
+                                <span class="badge bg-secondary">{{ log.get_previous_status_display }}</span>
+                                <i class="bi bi-arrow-right mx-1"></i>
+                                {% endif %}
+                                <span class="badge bg-primary">{{ log.get_new_status_display }}</span>
+                                {% if log.changed_by %}
+                                <small class="text-muted ms-2">por {{ log.changed_by.get_full_name }}</small>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ log.created_at|date:"d/m/Y H:i" }}</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center py-3">
+                    <small class="text-muted">Sin historial de cambios</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-lightning me-2"></i>Acciones Rápidas
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if appointment.can_be_confirmed %}
+                    <form method="post" action="{% url 'appointments:appointment_confirm' appointment.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-info w-100">
+                            <i class="bi bi-check me-1"></i> Confirmar Cita
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if appointment.status == 'pending' or appointment.status == 'confirmed' %}
+                    <form method="post" action="{% url 'appointments:appointment_attended' appointment.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle me-1"></i> Marcar Atendido
+                        </button>
+                    </form>
+
+                    <form method="post" action="{% url 'appointments:appointment_no_show' appointment.pk %}" onsubmit="return confirm('¿Marcar como no asistió? Se incrementará el contador de inasistencias del paciente.')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-dark w-100">
+                            <i class="bi bi-x-circle me-1"></i> No Asistió
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if not appointment.reminder_sent and appointment.status in 'pending,confirmed' %}
+                    <form method="post" action="{% url 'notifications:send_reminder' appointment.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-success w-100">
+                            <i class="bi bi-bell me-1"></i> Enviar Recordatorio
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel/Reschedule -->
+        {% if appointment.can_be_cancelled %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-calendar-x me-2"></i>Cancelar / Reprogramar
+            </div>
+            <div class="card-body">
+                <!-- Cancel Form -->
+                <form method="post" action="{% url 'appointments:appointment_cancel' appointment.pk %}" class="mb-3">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <textarea name="cancellation_reason" class="form-control" rows="2" placeholder="Motivo de cancelación..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100" onclick="return confirm('¿Cancelar esta cita?')">
+                        <i class="bi bi-x-lg me-1"></i> Cancelar Cita
+                    </button>
+                </form>
+
+                <hr>
+
+                <!-- Reschedule Form -->
+                <form method="post" action="{% url 'appointments:appointment_reschedule' appointment.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label class="form-label small">Nueva fecha</label>
+                        <input type="date" name="new_date" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Nueva hora</label>
+                        <input type="time" name="new_start_time" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Motivo (opcional)</label>
+                        <input type="text" name="reason" class="form-control" placeholder="Motivo...">
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="bi bi-calendar-plus me-1"></i> Reprogramar
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Created Info -->
+        <div class="card">
+            <div class="card-body text-center">
+                <small class="text-muted">
+                    Creado: {{ appointment.created_at|date:"d/m/Y H:i" }}
+                    {% if appointment.created_by %}
+                    <br>por {{ appointment.created_by.get_full_name }}
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base/base.html" %}
+
+{% block title %}Procedimientos - Citas Odontológicas{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-list-task me-2"></i>Tipos de Procedimientos</h1>
+    <a href="{% url 'appointments:proceduretype_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Procedimiento
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Duración</th>
+                        <th>Color</th>
+                        <th>Confirmación</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proc in procedures %}
+                    <tr>
+                        <td>
+                            <strong>{{ proc.name }}</strong>
+                            {% if proc.description %}
+                            <br><small class="text-muted">{{ proc.description|truncatewords:10 }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ proc.duration_minutes }} min</td>
+                        <td>
+                            <span class="badge" style="background-color: {{ proc.color }}">
+                                {{ proc.color }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if proc.requires_confirmation %}
+                            <i class="bi bi-check-circle text-success"></i> Requerida
+                            {% else %}
+                            <i class="bi bi-dash text-muted"></i> No requerida
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if proc.is_active %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'appointments:proceduretype_edit' proc.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No hay procedimientos registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
